@@ -8,7 +8,7 @@ the pipeline is using the following tools:
 usage:
 
 - clone this repository
-- put your dna file in the /dataset directory.
+- put your dna file in the /dna_file directory.
 - `chmod +x pipeline.sh`
 - `./pipeline.sh`
 
