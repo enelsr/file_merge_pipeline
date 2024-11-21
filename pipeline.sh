@@ -24,6 +24,9 @@ function log_warning() {
     echo -e "${COLOR_YELLOW}[WARNING]${COLOR_RESET} $1"
 }
 
+trap 'echo ""
+log_warning "Pipeline terminated by user." ; exit 1' SIGINT
+
 function choose_dna_file() {
     local outvar="$1"
     local esc=$(echo -en "\033")
@@ -149,9 +152,34 @@ function main() {
             exit
             ;;
     esac
+
+    # Get input file name
+    choose_dna_file FILENAME
+    # Format selection menu
+    format_options=(
+        "23andme"
+        "myheritage"
+        "ftdnav1"
+        "ftdnav2"
+        "ancestry"
+        "Quit"
+    )
+    choose_from_menu "Please select your DNA file format:" FORMAT "${format_options[@]}"
+    case $FORMAT in
+        "Quit")
+            log_warning "Pipeline terminated by user."
+            exit
+            ;;
+    esac
     print_header
     echo ""
+    echo -e "${COLOR_BLUE}Enter the family ID for your output file:\n  ${BICYAN}> \c"
+    read FAM
+    echo ""
+    print_header
+
     # Dataset-specific download logic
+    echo ""
     case $DATASET in
         "1240K")
         aadr="v62_AADR_1240K"
@@ -244,34 +272,10 @@ function main() {
         log_info "plink is already installed. Skipping download."
     fi
 
-    # Get input file name
-    echo ""
-    choose_dna_file FILENAME
-    # Format selection menu
-    format_options=(
-        "23andme"
-        "myheritage"
-        "ftdnav1"
-        "ftdnav2"
-        "ancestry"
-        "Quit"
-    )
-    choose_from_menu "Please select your DNA file format:" FORMAT "${format_options[@]}"
-    case $FORMAT in
-        "Quit")
-            log_warning "Pipeline terminated by user."
-            exit
-            ;;
-    esac
-    print_header
-    echo ""
-    echo -e "${COLOR_BLUE}Enter the family ID for your output file:\n  ${BICYAN}>${COLOR_RESET} \c"
-    read FAM
-    echo ""
-    print_header
-
     output_filename="${FAM}_${DATASET}"
 
+    echo ""
+    print_header
     echo ""
     log_info "Using terraseq to convert & align file..."
     ./bin/terraseq align --alignFile dataset/$alignfile --inFile dna_file/$FILENAME --inFormat $FORMAT --outFile dna_file/temp.txt --flip
@@ -282,13 +286,11 @@ function main() {
     log_info "Converting file to PLINK format..."
     ./bin/plink --23file dna_file/temp.txt --make-bed --out dna_file/temp
 
-
     echo ""
     print_header
     echo ""
     log_info "Updating Family ID..."
     awk -v fam="$FAM" 'NR==1 {$1=fam} {print}' dna_file/temp.fam > temp1.fam && mv temp1.fam dna_file/temp.fam
-
 
     echo ""
     print_header
