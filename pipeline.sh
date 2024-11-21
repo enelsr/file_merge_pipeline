@@ -95,13 +95,13 @@ function choose_from_menu() {
     shift
     local options=("$@") cur=0 count=${#options[@]} index=0
     local esc=$(echo -en "\033")
-    
+
     print_header
     echo ""
     printf "${COLOR_BLUE}$prompt${COLOR_RESET}\n"
     COLOR_OFF='\033[0m'
     BICYAN='\033[1;96m'
-    
+
     while true
     do
         # List all options
@@ -284,13 +284,7 @@ function main() {
     print_header
     echo ""
     log_info "Converting file to PLINK format..."
-    ./bin/plink --23file dna_file/temp.txt --make-bed --out dna_file/temp
-
-    echo ""
-    print_header
-    echo ""
-    log_info "Updating Family ID..."
-    awk -v fam="$FAM" 'NR==1 {$1=fam} {print}' dna_file/temp.fam > temp1.fam && mv temp1.fam dna_file/temp.fam
+    ./bin/plink --23file dna_file/temp.txt $FAM --make-bed --out dna_file/temp
 
     echo ""
     print_header
