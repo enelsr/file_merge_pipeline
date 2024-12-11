@@ -215,7 +215,7 @@ function main() {
         if [ ! -f dataset/v62_AADR_HO.bed ]; then
             log_info "Dataset not found. Downloading v62_AADR_HO in PLINK format..."
             cd dataset
-            wget "https://github.com/enelsr/poseidon-packages/releases/download/AADR/v62_AADR_HO.zip" -O v62_AADR_HO.zip
+            wget "https://github.com/enelsr/file_merge_pipeline/releases/download/dl.AADR/v62_AADR_HO.zip" -O v62_AADR_HO.zip
             if [ $? -eq 0 ]; then
                 log_info "Download complete. Unzipping..."
                 unzip v62_AADR_HO.zip
