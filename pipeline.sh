@@ -88,6 +88,73 @@ function choose_dna_file() {
     cd ..
 }
 
+function choose_dataset() {
+    local outvar="$1"
+    local esc=$(echo -en "\033")
+    COLOR_OFF='\033[0m'
+    BICYAN='\033[1;96m'
+
+    # Static options
+    local datasets=("1240K" "HO")
+    # Append dynamic options from .bed files in dataset directory, excluding specific files
+    for file in dataset/*.bed; do
+        case "$(basename "$file")" in
+            "v62_AADR_1240K.bed"|"v62_AADR_HO.bed")
+                continue
+                ;;
+            *)
+                datasets+=("$(basename "$file" .bed)")
+                ;;
+        esac
+    done
+    datasets+=("Quit")  # Add Quit option
+
+    local cur=0 count=${#datasets[@]} index=0
+
+    print_header
+    echo ""
+    printf "${COLOR_BLUE}Select the dataset to process:${COLOR_RESET}\n"
+
+    while true
+    do
+        # List all datasets
+        index=0
+        for d in "${datasets[@]}"
+        do
+            if [ "$index" == "$cur" ]
+            then echo -e " ${BICYAN}> $d${COLOR_OFF}"
+            else echo -e "   $d"
+            fi
+            index=$(( $index + 1 ))
+        done
+
+        read -s -n3 key # Wait for user input
+        case $key in
+            $esc[A) # Up arrow
+                cur=$(( $cur - 1 ))
+                if [ "$cur" -lt 0 ]; then
+                    cur=0
+                fi ;;
+            $esc[B) # Down arrow
+                cur=$(( $cur + 1 ))
+                if [ "$cur" -ge "$count" ]; then
+                    cur=$(( $count - 1 ))
+                fi ;;
+            '') break ;;
+            *) ;;
+        esac
+
+        echo -en "\033[${count}A" # Go up to re-render
+    done
+    echo ""
+    # Return selected dataset or handle Quit
+    if [ "${datasets[$cur]}" == "Quit" ]; then
+        log_warning "Pipeline terminated by user."
+        exit
+    fi
+
+    printf -v $outvar "${datasets[$cur]}"
+}
 
 function choose_from_menu() {
     local prompt="$1" outvar="$2"
@@ -139,13 +206,8 @@ function choose_from_menu() {
 function main() {
     clear
 
-    dataset_options=(
-        "1240K"
-        "HO"
-        "Quit"
-    )
     echo ""
-    choose_from_menu "Please select your dataset choice:" DATASET "${dataset_options[@]}"
+    choose_dataset DATASET
     case $DATASET in
         "Quit")
             log_warning "Pipeline terminated by user."
@@ -181,7 +243,7 @@ function main() {
     # Dataset-specific download logic
     echo ""
     case $DATASET in
-        "1240K")
+    "1240K")
         aadr="v62_AADR_1240K"
         alignfile="${aadr}.bim"
         if [ ! -f dataset/v62_AADR_1240K.bed ]; then
@@ -206,10 +268,8 @@ function main() {
         else
             log_info "Dataset already exists. Skipping download."
         fi
-        esac
-
-    case $DATASET in
-        "HO")
+        ;;
+    "HO")
         aadr="v62_AADR_HO"
         alignfile="${aadr}.bim"
         if [ ! -f dataset/v62_AADR_HO.bed ]; then
@@ -234,7 +294,12 @@ function main() {
         else
             log_info "Dataset already exists. Skipping download."
         fi
-        esac
+        ;;
+    *)
+        aadr="$DATASET"
+        alignfile="${aadr}.bim"
+    esac
+
 
     # Check and download terraseq if needed
     if [ ! -f bin/terraseq ]; then
