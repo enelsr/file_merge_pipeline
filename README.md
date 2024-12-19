@@ -1,4 +1,4 @@
-pipeline to merge a file from a commercial dna test (e.g 23andme) with the AADR 1240K or HO dataset.
+pipeline to merge a file from a commercial dna test (e.g 23andme) with the AADR 1240K or HO dataset or an own dataset.
 
 the pipeline is using the following tools:
 
